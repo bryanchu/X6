@@ -35,6 +35,7 @@ X6.GlobalControl = function() {
     self.sceneLimit = 400000;
     self.ties = [];
     self.waitingAJAXCalls = 0;
+    self.activeExplosions = [];
     self.initScene = function() {
         X6.Navigation.altBar = document.getElementById('altBar');
         X6.Navigation.altHeight = parseInt(getComputedStyle(document.getElementById('altitude')).getPropertyValue('height').replace('px', ''));
@@ -186,24 +187,6 @@ X6.GlobalControl = function() {
             nextRotY = .00005 * (y - midY);
         };
         container.onmousedown = function() {
-            // var geometry = new THREE.Geometry();
-            // var sprite = THREE.ImageUtils.loadTexture( "/img/particle.png" );
-            // for ( i = 0; i < 10000; i ++ ) {
-            //   var vertex = new THREE.Vector3();
-            //   vertex.x = 2000 * Math.random() - 1000;
-            //   vertex.y = 2000 * Math.random() - 1000;
-            //   vertex.z = 2000 * Math.random() - 1000;
-            //   geometry.vertices.push( vertex );
-            // }
-            // material = new THREE.ParticleBasicMaterial( { size: 35, sizeAttenuation: false, map: sprite, transparent: true } );
-            // material.color.setHSV( 1.0, 0.2, 0.8 );
-
-            // particles = new THREE.ParticleSystem( geometry, material );
-            // particles.sortParticles = true;
-            // // self.scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
-            // X6.GlobalControl.xWing.pieces[0].add( particles );
-
-
             self.xWing.firing = true;
             (function fireLoop() {
                 self.xWing.fire();
@@ -282,11 +265,27 @@ X6.GlobalControl = function() {
         }
         X6.Navigation.moveAltBar(self.xWing.pieces[0].rotation.y);
         X6.Navigation.moveShips();
-        // ((currPos.x > limit || currPos.x < -limit) ||
-        // (currPos.y > limit || currPos.y < -limit) ||
-        // (currPos.z > limit || currPos.z < -limit)) && self.xWing.displacePieces(0, 0, 0);
+        ((currPos.x > limit || currPos.x < -limit) ||
+        (currPos.y > limit || currPos.y < -limit) ||
+        (currPos.z > limit || currPos.z < -limit)) && self.xWing.displacePieces(0, 0, 0);
         self.xWing.moveLasers(5);
-
+        for (var i = 0; i < self.activeExplosions.length; i++) {
+            try {
+                var vertices = self.activeExplosions[i].geometry.vertices;
+                for (var j = 0; j < vertices.length; j++) {
+                    // vertices[j].x *= 1 + (10 / Math.abs(vertices[j].x));
+                    // vertices[j].y *= 1 + (10 / Math.abs(vertices[j].y));
+                    // vertices[j].z *= 1 + (10 / Math.abs(vertices[j].z));
+                    // vertices[j].x *= Math.log(Math.abs(vertices[j].x)) / 4;
+                    // vertices[j].y *= Math.log(Math.abs(vertices[j].y)) / 4;
+                    // vertices[j].z *= Math.log(Math.abs(vertices[j].z)) / 4;
+                    vertices[j].x *= 1 + (Math.random() / 5);
+                    vertices[j].y *= 1 + (Math.random() / 5);
+                    vertices[j].z *= 1 + (Math.random() / 5);
+                }
+            }
+            catch(e){}
+        }
     };
 
     return self;
@@ -298,6 +297,7 @@ X6.Navigation = function() {
         self.altBar.style.bottom = ((rot - (Math.PI / 2)) / -Math.PI) * parseInt(self.altHeight);
     };
     self.moveShips = function() {
+        self.player.style["-webkit-transform"] = "rotate(" + X6.GlobalControl.xWing.pieces[0].rotation.x * 360 / (Math.PI / 2) + "deg)";
         self.player.style.top = 100 + ((X6.GlobalControl.xWing.pieces[0].position.z / (X6.GlobalControl.sceneLimit / 2)) * 100);
         self.player.style.left = 100 + ((X6.GlobalControl.xWing.pieces[0].position.y / (X6.GlobalControl.sceneLimit / 2)) * 100);
         for (var i in self.tieDots) {
@@ -461,11 +461,36 @@ X6.Tie = function() {
 X6.Tie.normalSpeed = 300;
 X6.Tie.prototype = X6.StarShip.prototype;
 X6.Tie.prototype.destroy = function(index) {
+    var geometry = new THREE.Geometry();
+    var sprite = THREE.ImageUtils.loadTexture( "/img/particle.png" );
+    for ( i = 0; i < 300; i ++ ) {
+      var vertex = new THREE.Vector3();
+      vertex.x = 1000 * Math.random() - 500;
+      vertex.y = 1000 * Math.random() - 500;
+      vertex.z = 1000 * Math.random() - 500;
+      geometry.vertices.push( vertex );
+    }
+    // geometry = new THREE.SphereGeometry(500);
+    material = new THREE.ParticleBasicMaterial( { size: 15, sizeAttenuation: false, map: sprite, transparent: true } );
+    // material = new THREE.MeshBasicMaterial({color: 0xff0000});
+    material.color.setRGB( (Math.random() + 1) / 2, (Math.random() + 1) / 2, (Math.random() + 1) / 2);
+
+    particles = new THREE.ParticleSystem( geometry, material );
+    X6.GlobalControl.activeExplosions.push(particles);
+    (function (index) {
+        setTimeout(function() {
+            X6.GlobalControl.scene.remove(particles);
+            X6.GlobalControl.activeExplosions.splice(index, index + 1);
+        }, 1000);
+    })(X6.GlobalControl.activeExplosions.length);
+    particles.sortParticles = true;
+    particles.position = X6.GlobalControl.ties[index].pieces[0].position;
+    // self.scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
+    X6.GlobalControl.scene.add( particles );
     X6.GlobalControl.ties[index] = null;
     for (piece in this.pieces) {
         X6.GlobalControl.scene.remove(this.pieces[piece]);
     }
-
 };
 
 window.onload = X6.GlobalControl.initScene;
