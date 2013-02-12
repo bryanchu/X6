@@ -430,7 +430,7 @@ X6.StarShip.prototype.inDistance = function(laserPos, tiePos, hitRadius) {
 X6.XWing = function() {
     X6.StarShip.call(this);
 };
-X6.XWing.normalSpeed = 100;
+X6.XWing.normalSpeed = 150;
 X6.XWing.prototype = new X6.StarShip();
 X6.XWing.prototype.moveLasers = function(speed) {
     var globalPos;
