@@ -1,6 +1,9 @@
 //Bryan Chu | XWing Fighter Simulation
 //TODO refactor, modularize junk in globalcontrol
-(navigator.userAgent.toLowerCase().indexOf('chrome') < 0) && alert("This experiment was built to run in Chrome.");
+if (navigator.userAgent.toLowerCase().indexOf('chrome') < 0) {
+    alert("This experiment was built to run in Chrome.");
+    document.body.innerHTML = "";
+}
 
 window['requestAnimFrame'] = (function(){
   return  window.requestAnimationFrame       || 
@@ -136,7 +139,7 @@ X6.GlobalControl = function() {
         controls.rotateSpeed = 0;
         // controls.zoomSpeed = 1.2;
         // controls.panSpeed = 0.8;
-        controls.noZoom = true;
+        // controls.noZoom = true;
         // controls.noPan = false;
         // controls.keys = [65, 83, 68];
 
@@ -165,11 +168,12 @@ X6.GlobalControl = function() {
 
         (function checkAjaxFinish() {
             if (self.waitingAJAXCalls < 1) {
-                self.xWing.pieces[0].add(self.camera);
+                self.xWing.getBase().add(self.camera);
                 // self.scene.add(self.camera);
                 // self.camera.rotation.set(Math.PI / 2, Math.PI / 2, 0);
                 // self.camera.position.set(10000, 10000, 0);
                 self.xWing.addLight(0xff0000);
+                self.xWing.thrust();
                 // self.scene.add(self.camera);
                 var playButton = document.getElementById('play');
                 playButton.innerHTML = "Play";
@@ -221,12 +225,11 @@ X6.GlobalControl = function() {
     function updateScene() {
         var xWing = self.xWing;
         xWing.rotatePieces(nextRotX, nextRotY, 0);
-        var basePiece = xWing.pieces[0],
+        var basePiece = xWing.getBase(),
             currRot = basePiece.rotation,
             currPos = basePiece.position,
             speed = X6.XWing.normalSpeed,
             tSpeed = X6.Tie.normalSpeed;
-        xWing.movePieces(speed * Math.cos(currRot.x), speed * Math.sin(currRot.y), speed * Math.sin(currRot.x));
         //down/up, back/forth, left/right
         var xMove = speed * Math.sin(currRot.y), 
             yMove = speed * -Math.sin(currRot.x),
@@ -237,25 +240,27 @@ X6.GlobalControl = function() {
             xWing.movePieces(speed * Math.sin(currRot.y), //z
                               speed * -Math.sin(currRot.x),//x
                               speed * Math.cos(currRot.x));//y
+        xWing.sparksEmitter.addAction(new SPARKS.Age());
+        xWing.sparksEmitter.addAction(new SPARKS.Move());
         for (var i = 0; i < self.ties.length; i++) {
             var currentTie = self.ties[i];
             if (!currentTie) {
                 continue;
             }
-            var currentTieBase = currentTie.pieces[0];
+            var currentTieBase = currentTie.getBase();
             var tRot = currentTieBase.rotation;
             var tPos = currentTieBase.position;
             if (tPos.x < currPos.x && tRot.y < Math.PI / 2) {
-                tRot.y += .0000001 * (currPos.x - tPos.x);
+                tRot.y += .0000005 * (currPos.x - tPos.x);
             } else if (tPos.x > currPos.x && tRot.y > -Math.PI / 2){
-                tRot.y -= .0000001 * (tPos.x - currPos.x);
+                tRot.y -= .0000005 * (tPos.x - currPos.x);
             }
             var angle = Math.atan2(currPos.z - tPos.z, tPos.y - currPos.y);
             currPos.z - tPos.z < 0 && (angle += 2 * Math.PI);
             var tRotAdj = (3 * Math.PI / 2) - tRot.x;
             if ((angle < Math.PI && tRotAdj > angle && tRotAdj < angle + Math.PI) || 
                 (angle >= Math.PI && (tRotAdj > angle || tRotAdj < angle - Math.PI))) {
-                tRot.x -= .01;
+                tRot.x -= .01;//< .02
                 if (tRotAdj > 2 * Math.PI) {
                     tRot.x += 2 * Math.PI;
                 }
@@ -268,18 +273,20 @@ X6.GlobalControl = function() {
             currentTie.movePieces(tSpeed * Math.sin(tRot.y),
                                 tSpeed * -Math.sin(tRot.x),
                                 tSpeed * Math.cos(tRot.x));
-            if (currentTie.inDistance(self.xWing.pieces[0].position, tPos, 50000)) {
+            if (currentTie.inDistance(self.xWing.getBase().position, tPos, 20000)) {
                 if (currentTie.canFire) {
                     currentTie.canFire = false;
                     currentTie.fire(0x00ff00, 5);
-                    setTimeout(function() {
-                        currentTie.canFire = true;
-                    }, 200);
+                    (function(tieClosure) {
+                        setTimeout(function() {
+                            tieClosure.canFire = true;
+                        }, 200);
+                    })(currentTie);
                 }
             }
             currentTie.moveLasers(10);
         }
-        X6.Navigation.moveAltBar(self.xWing.pieces[0].rotation.y);
+        X6.Navigation.moveAltBar(self.xWing.getBase().rotation.y);
         X6.Navigation.moveShips();
         ((currPos.x > limit || currPos.x < -limit) ||
         (currPos.y > limit || currPos.y < -limit) ||
@@ -306,9 +313,9 @@ X6.Navigation = function() {
         self.altBar.style.bottom = ((rot - (Math.PI / 2)) / -Math.PI) * parseInt(self.altHeight);
     };
     self.moveShips = function() {
-        self.player.style["-webkit-transform"] = "rotate(" + X6.GlobalControl.xWing.pieces[0].rotation.x * 360 / (Math.PI / 2) + "deg)";
-        self.player.style.top = 100 + ((X6.GlobalControl.xWing.pieces[0].position.z / (X6.GlobalControl.sceneLimit / 2)) * 100);
-        self.player.style.left = 100 + ((X6.GlobalControl.xWing.pieces[0].position.y / (X6.GlobalControl.sceneLimit / 2)) * 100);
+        self.player.style["-webkit-transform"] = "rotate(" + ((X6.GlobalControl.xWing.getBase().rotation.x * 360 / (2 * Math.PI)) + 180) + "deg)";
+        self.player.style.top = 100 + ((X6.GlobalControl.xWing.getBase().position.z / (X6.GlobalControl.sceneLimit / 2)) * 100);
+        self.player.style.left = 100 + ((X6.GlobalControl.xWing.getBase().position.y / (X6.GlobalControl.sceneLimit / 2)) * 100);
         for (var i in self.tieDots) {
             if (!self.tieDots[i]) {
                 continue;
@@ -318,16 +325,13 @@ X6.Navigation = function() {
                 self.tieDots[i] = null;
                 continue;
             }
-            self.tieDots[i].style.top = 100 + ((X6.GlobalControl.ties[i].pieces[0].position.z / (X6.GlobalControl.sceneLimit / 2)) * 100);
-            self.tieDots[i].style.left = 100 + ((X6.GlobalControl.ties[i].pieces[0].position.y / (X6.GlobalControl.sceneLimit / 2)) * 100);
+            self.tieDots[i].style.top = 100 + ((X6.GlobalControl.ties[i].getBase().position.z / (X6.GlobalControl.sceneLimit / 2)) * 100);
+            self.tieDots[i].style.left = 100 + ((X6.GlobalControl.ties[i].getBase().position.y / (X6.GlobalControl.sceneLimit / 2)) * 100);
         }
     }
     return self;
 }();
 //CLASSES
-X6.Missile = function() {
-    //do this later
-};
 X6.StarShip = function() {
     this.pieces = [];
     this.firing = false;
@@ -337,6 +341,9 @@ X6.StarShip = function() {
         defaultGrey: 0xcccccc
     };
 };
+X6.StarShip.prototype.getBase = function() {
+    return this.pieces[0];
+}
 X6.StarShip.prototype.addPiece = function(geometry, material, scale) {
     geometry.mergeVertices();
     // var Meshtype = config.meshType == "Lambert" ? THREE.MeshLambertMaterial : (config.meshType == "Basic" ? THREE.MeshBasicMaterial : THREE.MeshPhongMaterial);
@@ -374,7 +381,19 @@ X6.StarShip.prototype.displacePieces = function(x, y, z) {
     }
 };
 X6.StarShip.prototype.addLight = function(color) {
-    this.pieces[0].add(new THREE.PointLight(color, 19.0, 2));
+    this.getBase().add(new THREE.PointLight(color, 19.0, 2));
+};
+X6.StarShip.prototype.thrust = function(color) {
+    // this.thruster && this.getBase().remove(this.thruster);
+    // var geometry = new THREE.CylinderGeometry(1, 1, 5);
+    // var material = new THREE.MeshBasicMaterial({color: 0xff0000});
+    // this.thruster = new THREE.Mesh(geometry, material);
+    // this.getBase().add(this.thruster);
+    this.sparksEmitter = new SPARKS.Emitter(new SPARKS.SteadyCounter(16));
+    this.sparksEmitter.addInitializer(new SPARKS.Position( new SPARKS.PointZone( this.getBase().position ) ) );
+    this.sparksEmitter.addInitializer(new SPARKS.Lifetime(4,5));
+    // this.sparksEmitter.addInitializer(new SPARKS.Target(null, callback)); 
+    this.sparksEmitter.addInitializer(new SPARKS.Velocity(new SPARKS.PointZone(new THREE.Vector3(0,100,00))));
 };
 X6.StarShip.prototype.fire = function(color, cacheLimit) {
     var geometry = new THREE.CubeGeometry(.1, 3, .1, 10, 10, 10);
@@ -400,10 +419,10 @@ X6.StarShip.prototype.fire = function(color, cacheLimit) {
             console.warn("Broken switch!");
     }
     mesh.rotation.x = Math.PI / 2;
-    this.pieces[0].add(mesh);
+    this.getBase().add(mesh);
     this.activeLasers.push(mesh);
     if (this.activeLasers.length > cacheLimit) {
-        this.pieces[0].remove(this.activeLasers.splice(0, 1)[0]);
+        this.getBase().remove(this.activeLasers.splice(0, 1)[0]);
     } 
     this.activeGun += (this.activeGun == 3 ? -3 : 1);
 };
@@ -427,7 +446,7 @@ X6.XWing.prototype.moveLasers = function(speed) {
         var pos = this.activeLasers[i].position;
         // console.log(pos.z);
         // if (pos.z > 300000) {
-        //     this.pieces[0].remove(this.activeLasers.splice(i, i + 1)[0]);
+        //     this.getBase().remove(this.activeLasers.splice(i, i + 1)[0]);
         //     continue;
         // } else {
             pos.z += speed;
@@ -448,11 +467,11 @@ X6.XWing.prototype.moveLasers = function(speed) {
             // console.log(globalLaserPos.y);
             // console.log(globalLaserPos.z);
             // console.log("----");
-            // console.log(X6.GlobalControl.ties[tie].pieces[0].position.x);
-            // console.log(X6.GlobalControl.ties[tie].pieces[0].position.y);
-            // console.log(X6.GlobalControl.ties[tie].pieces[0].position.z);
+            // console.log(X6.GlobalControl.ties[tie].getBase().position.x);
+            // console.log(X6.GlobalControl.ties[tie].getBase().position.y);
+            // console.log(X6.GlobalControl.ties[tie].getBase().position.z);
             // console.log("----");
-            if (this.inDistance(globalLaserPos, X6.GlobalControl.ties[tie].pieces[0].position, 1000)) {
+            if (this.inDistance(globalLaserPos, X6.GlobalControl.ties[tie].getBase().position, 1000)) {
                 console.log("HITTTT!!!!");
                 console.log();
                 // tie++;
@@ -492,7 +511,7 @@ X6.Tie.prototype.destroy = function(index) {
         }, 1000);
     })(X6.GlobalControl.activeExplosions.length);
     particles.sortParticles = true;
-    particles.position = X6.GlobalControl.ties[index].pieces[0].position;
+    particles.position = X6.GlobalControl.ties[index].getBase().position;
     // self.scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
     X6.GlobalControl.scene.add( particles );
     X6.GlobalControl.ties[index] = null;
