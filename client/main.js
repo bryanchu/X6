@@ -1,6 +1,6 @@
 //Bryan Chu | XWing Fighter Simulation
 //TODO refactor, modularize junk in globalcontrol
-(navigator.userAgent.toLowerCase().indexOf('chrome') < 0) && alert("Please use Chrome for optimal WebGL.");
+(navigator.userAgent.toLowerCase().indexOf('chrome') < 0) && alert("This experiment was built to run in Chrome.");
 
 window['requestAnimFrame'] = (function(){
   return  window.requestAnimationFrame       || 
@@ -136,7 +136,7 @@ X6.GlobalControl = function() {
         controls.rotateSpeed = 0;
         // controls.zoomSpeed = 1.2;
         // controls.panSpeed = 0.8;
-        // controls.noZoom = false;
+        controls.noZoom = true;
         // controls.noPan = false;
         // controls.keys = [65, 83, 68];
 
@@ -473,13 +473,13 @@ X6.Tie.prototype.destroy = function(index) {
     var sprite = THREE.ImageUtils.loadTexture( "/img/particle.png" );
     for ( i = 0; i < 300; i ++ ) {
       var vertex = new THREE.Vector3();
-      vertex.x = 1000 * Math.random() - 500;
-      vertex.y = 1000 * Math.random() - 500;
-      vertex.z = 1000 * Math.random() - 500;
+      vertex.x = 2000 * Math.random() - 500;
+      vertex.y = 2000 * Math.random() - 500;
+      vertex.z = 2000 * Math.random() - 500;
       geometry.vertices.push( vertex );
     }
     // geometry = new THREE.SphereGeometry(500);
-    material = new THREE.ParticleBasicMaterial( { size: 15, sizeAttenuation: false, map: sprite, transparent: true } );
+    material = new THREE.ParticleBasicMaterial( { size: 12, sizeAttenuation: true, map: sprite, transparent: true } );
     // material = new THREE.MeshBasicMaterial({color: 0xff0000});
     material.color.setRGB( (Math.random() + 1) / 2, (Math.random() + 1) / 2, (Math.random() + 1) / 2);
 
