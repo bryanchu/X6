@@ -228,12 +228,12 @@ X6.GlobalControl = function() {
             speed = X6.XWing.normalSpeed,
             tSpeed = X6.Tie.normalSpeed;
         //down/up, back/forth, left/right
-        var xMove = speed * Math.sin(currRot.y), 
-            yMove = speed * -Math.sin(currRot.x),
-            zMove = speed * Math.cos(currRot.x);
-        ((currPos.x + xMove < limit && currPos.x + xMove > -limit) &&
-        (currPos.y + yMove < limit && currPos.y + yMove > -limit) &&
-        (currPos.z + zMove < limit && currPos.z + zMove > -limit)) &&
+        // var xMove = speed * Math.sin(currRot.y), 
+        //     yMove = speed * -Math.sin(currRot.x),
+        //     zMove = speed * Math.cos(currRot.x);
+        // ((currPos.x + xMove < limit && currPos.x + xMove > -limit) &&
+        // (currPos.y + yMove < limit && currPos.y + yMove > -limit) &&
+        // (currPos.z + zMove < limit && currPos.z + zMove > -limit)) &&
             xWing.movePieces(speed * Math.sin(currRot.y), //z
                               speed * -Math.sin(currRot.x),//x
                               speed * Math.cos(currRot.x));//y
