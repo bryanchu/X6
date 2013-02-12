@@ -169,11 +169,8 @@ X6.GlobalControl = function() {
         (function checkAjaxFinish() {
             if (self.waitingAJAXCalls < 1) {
                 self.xWing.getBase().add(self.camera);
-                // self.scene.add(self.camera);
-                // self.camera.rotation.set(Math.PI / 2, Math.PI / 2, 0);
-                // self.camera.position.set(10000, 10000, 0);
                 self.xWing.addLight(0xff0000);
-                self.xWing.thrust();
+                // self.xWing.thrust();
                 // self.scene.add(self.camera);
                 var playButton = document.getElementById('play');
                 playButton.innerHTML = "Play";
@@ -240,8 +237,8 @@ X6.GlobalControl = function() {
             xWing.movePieces(speed * Math.sin(currRot.y), //z
                               speed * -Math.sin(currRot.x),//x
                               speed * Math.cos(currRot.x));//y
-        xWing.sparksEmitter.addAction(new SPARKS.Age());
-        xWing.sparksEmitter.addAction(new SPARKS.Move());
+        // xWing.sparksEmitter.addAction(new SPARKS.Age());
+        // xWing.sparksEmitter.addAction(new SPARKS.Move());
         for (var i = 0; i < self.ties.length; i++) {
             var currentTie = self.ties[i];
             if (!currentTie) {
@@ -384,16 +381,11 @@ X6.StarShip.prototype.addLight = function(color) {
     this.getBase().add(new THREE.PointLight(color, 19.0, 2));
 };
 X6.StarShip.prototype.thrust = function(color) {
-    // this.thruster && this.getBase().remove(this.thruster);
-    // var geometry = new THREE.CylinderGeometry(1, 1, 5);
-    // var material = new THREE.MeshBasicMaterial({color: 0xff0000});
-    // this.thruster = new THREE.Mesh(geometry, material);
-    // this.getBase().add(this.thruster);
-    this.sparksEmitter = new SPARKS.Emitter(new SPARKS.SteadyCounter(16));
-    this.sparksEmitter.addInitializer(new SPARKS.Position( new SPARKS.PointZone( this.getBase().position ) ) );
-    this.sparksEmitter.addInitializer(new SPARKS.Lifetime(4,5));
-    // this.sparksEmitter.addInitializer(new SPARKS.Target(null, callback)); 
-    this.sparksEmitter.addInitializer(new SPARKS.Velocity(new SPARKS.PointZone(new THREE.Vector3(0,100,00))));
+    this.thruster && this.getBase().remove(this.thruster);
+    var geometry = new THREE.CylinderGeometry(1, 1, 5);
+    var material = new THREE.MeshBasicMaterial({color: 0xff0000});
+    this.thruster = new THREE.Mesh(geometry, material);
+    this.getBase().add(this.thruster);
 };
 X6.StarShip.prototype.fire = function(color, cacheLimit) {
     var geometry = new THREE.CubeGeometry(.1, 3, .1, 10, 10, 10);
@@ -487,9 +479,10 @@ X6.Tie = function() {
 };
 X6.Tie.normalSpeed = 300;
 X6.Tie.prototype = new X6.StarShip();
+X6.Tie.prototype.sprite = THREE.ImageUtils.loadTexture( "/img/particle.png" );
 X6.Tie.prototype.destroy = function(index) {
     var geometry = new THREE.Geometry();
-    var sprite = THREE.ImageUtils.loadTexture( "/img/particle.png" );
+    var sprite = this.sprite;
     for ( i = 0; i < 300; i ++ ) {
       var vertex = new THREE.Vector3();
       vertex.x = 2000 * Math.random() - 500;
