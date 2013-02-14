@@ -20,6 +20,8 @@ X6 = {};
 //SINGLETONS
 X6.GlobalControl = function() {
     var renderer, camera, container,
+        loader = new THREE.JSONLoader(), 
+        baseURL = "meshes/";
         NUMOFTIES = 10,
         midX = window.innerWidth / 2, midY = window.innerHeight / 2,
         COLORENUM = {Red: 0xFF0000,
@@ -37,6 +39,7 @@ X6.GlobalControl = function() {
     var self = {};
     self.sceneLimit = 500000;
     self.ties = [];
+    self.killCount = 0;
     self.waitingAJAXCalls = 0;
     self.activeExplosions = [];
     self.initScene = function() {
@@ -73,23 +76,12 @@ X6.GlobalControl = function() {
         // storeMesh({color: COLORENUM.White, useQuat: true}, "flipperRight.js", "rightWiper");
 
         //Load the meshes.
-        var baseURL = "meshes/";
-        var loader = new THREE.JSONLoader();
         var tieGeo;
         self.xWing = new X6.XWing();
         loadAndTrack("xwing.js", function(geometry) {self.xWing.addPiece(geometry, "defaultGrey", 500);});
         loadAndTrack("tie.js", function(geometry) {
             tieGeo = geometry;
             for (var i = 0; i < NUMOFTIES; i++) {
-                // var material = new THREE.MeshBasicMaterial({specular: 0x888888, color: 0x111111});// map: THREE.ImageUtils.loadTexture("/img/redTest.png")});
-                // var mesh = new THREE.Mesh( geometry, material );
-                // mesh.rotation.z = Math.PI / 2;
-                // mesh.rotation.x = Math.PI / 2;
-                // // mesh.useQuaternion = true;//config.useQuat;
-                // mesh.scale.set(500000, 500000, 500000);
-                // mesh.position = new THREE.Vector3(0, 0, 0);
-                // X6.GlobalControl.scene.add(mesh);
-
                 var newTie = new X6.Tie();
                 self.ties.push(newTie);
                 newTie.addPiece(tieGeo, "defaultGrey", 500);
@@ -101,11 +93,6 @@ X6.GlobalControl = function() {
                 X6.Navigation.tieDots.push(minimapEl);
             }
         });
-
-        function loadAndTrack(url, func) {
-            self.waitingAJAXCalls++;
-            loader.load(baseURL + url, func);
-        };
 
         // Lights
         light = new THREE.DirectionalLight( 0xFFFFFF );
@@ -185,7 +172,10 @@ X6.GlobalControl = function() {
                 setTimeout(checkAjaxFinish, 200);
             } 
         })();
-        
+    };
+    function loadAndTrack(url, func) {
+        self.waitingAJAXCalls++;
+        loader.load(baseURL + url, func);
     };
     var nextRotX = 0, nextRotY = 0;
     function initControls() {
@@ -293,6 +283,25 @@ X6.GlobalControl = function() {
                 }
             }
             catch(e){}
+        }
+        if (self.killCount == NUMOFTIES) {
+            self.killCount = 0;
+            NUMOFTIES += 5;
+            alert("Congratulations! Would you like to kill more?");
+            loadAndTrack("tie.js", function(geometry) {
+                tieGeo = geometry;
+                for (var i = 0; i < NUMOFTIES; i++) {
+                    var newTie = new X6.Tie();
+                    self.ties.push(newTie);
+                    newTie.addPiece(tieGeo, "defaultGrey", 500);
+                    newTie.displacePieces(Math.random() * self.sceneLimit - (self.sceneLimit / 2), Math.random() * self.sceneLimit - (self.sceneLimit / 2), Math.random() * self.sceneLimit - (self.sceneLimit / 2));
+                    // newTie.displacePieces(0, -100000, 0);
+                    var minimapEl = document.createElement('div');
+                    minimapEl.className += "arrow tie";
+                    document.getElementById('minimap').appendChild(minimapEl);
+                    X6.Navigation.tieDots.push(minimapEl);
+                }
+            });
         }
     };
     return self;
@@ -491,6 +500,7 @@ X6.Tie.prototype.destroy = function(index) {
 
     particles = new THREE.ParticleSystem( geometry, material );
     X6.GlobalControl.activeExplosions.push(particles);
+    X6.GlobalControl.killCount++;
     (function (index) {
         setTimeout(function() {
             X6.GlobalControl.scene.remove(particles);
