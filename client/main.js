@@ -207,7 +207,7 @@ X6.GlobalControl = function() {
         render();
         window.requestAnimFrame(main);
     };
-    var limit = (self.sceneLimit / 2) - 60000;
+    var limit = (self.sceneLimit / 2) - 70000;
     var buffer = 3000;
     function updateScene() {
         var xWing = self.xWing;
