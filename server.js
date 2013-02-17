@@ -4,7 +4,7 @@ var app = express.createServer(express.logger(), express.bodyParser(), express.s
 
 app.get('/', function(request, response) {
   response.sendfile(__dirname + '/client/index.html');
-});
+}); 
 
 var port = process.env.PORT || 3000;
 app.listen(port, function() {
