@@ -9,3 +9,9 @@
     "npm": "1.1.x"
   }
 }
+{
+  "name": "xwsim",
+  "dependencies": {
+    "nodefly": "stable"
+  }
+}
