@@ -26,7 +26,7 @@ function extend(subClass, superClass) {
     if(superClass.prototype.constructor == Object.prototype.constructor) {
         superClass.prototype.constructor = superClass;
     }
-}
+};
 
 X6 = {};
 //SINGLETONS
@@ -450,7 +450,6 @@ X6.XWing = function() {
     X6.StarShip.call(this);
 };
 X6.XWing.normalSpeed = 200;
-// X6.XWing.prototype = new X6.StarShip();
 extend(X6.XWing, X6.StarShip);
 X6.XWing.prototype.moveLasers = function(speed) {
     var globalPos;
@@ -498,7 +497,6 @@ X6.Tie = function() {
     this.canFire = true;
 };
 X6.Tie.normalSpeed = 300;
-// X6.Tie.prototype = new X6.StarShip();
 extend(X6.Tie, X6.StarShip);
 X6.Tie.prototype.sprite = THREE.ImageUtils.loadTexture( "/img/particle.png" );
 X6.Tie.prototype.destroy = function(index) {
