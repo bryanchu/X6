@@ -1,7 +1,3 @@
-require('nodefly').profile(
-    '66be8553-9270-4344-a5e3-5107c972a67c',
-    ['xwsim','Heroku']
-);
 require('newrelic');
 var express = require('express');
 
